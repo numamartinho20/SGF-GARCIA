@@ -1,0 +1,290 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Sistema de Propinas | Escola NKJ-09 DEVAGAR</title>
+  <style>
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-900">
+  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mb-8 rounded-3xl bg-white/90 p-6 ring-1 ring-slate-200/80 shadow-sm backdrop-blur">
+      <h2 class="sr-only">Sistema de Controlo de Propinas — Escola NKJ-09 DEVAGAR</h2>
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold text-slate-900">Escola NKJ-09 DEVAGAR</h1>
+          <p class="mt-1 text-sm text-slate-600">Mapa de Controlo de Propinas e Provas — 3ª Classe</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 rounded-2xl bg-slate-100 p-2">
+          <button class="nav-button rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700" data-section="propinas" onclick="showSection('propinas')">Propinas</button>
+          <button class="nav-button rounded-2xl px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200" data-section="financeiro" onclick="showSection('financeiro')">Financeiro</button>
+          <button class="nav-button rounded-2xl px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200" data-section="alunos" onclick="showSection('alunos')">Alunos</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded-3xl bg-white p-5 ring-1 ring-slate-200/80 shadow-sm">
+        <p class="text-xs uppercase tracking-[0.25em] text-slate-500">Total Alunos</p>
+        <p id="metric-alunos" class="mt-3 text-3xl font-semibold text-slate-900"></p>
+      </div>
+      <div class="rounded-3xl bg-white p-5 ring-1 ring-slate-200/80 shadow-sm">
+        <p class="text-xs uppercase tracking-[0.25em] text-slate-500">Propinas Pagas</p>
+        <p id="metric-pagas" class="mt-3 text-3xl font-semibold text-emerald-600"></p>
+      </div>
+      <div class="rounded-3xl bg-white p-5 ring-1 ring-slate-200/80 shadow-sm">
+        <p class="text-xs uppercase tracking-[0.25em] text-slate-500">Com Dívida</p>
+        <p id="metric-divida" class="mt-3 text-3xl font-semibold text-amber-700"></p>
+      </div>
+      <div class="rounded-3xl bg-white p-5 ring-1 ring-slate-200/80 shadow-sm">
+        <p class="text-xs uppercase tracking-[0.25em] text-slate-500">Saldo (Kz)</p>
+        <p id="metric-saldo" class="mt-3 text-3xl font-semibold"></p>
+      </div>
+    </div>
+
+    <div id="propinas" class="section mt-8 rounded-3xl bg-white p-6 ring-1 ring-slate-200/80 shadow-sm">
+      <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Mapa de Propinas</h2>
+          <p class="mt-1 text-sm text-slate-500">Acompanhe pagamentos à distância de um clique.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <select id="filter-mes" onchange="renderPropinas()" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100">
+            <option value="">Todos os meses</option>
+          </select>
+          <button class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700" onclick="openModal('add-aluno')">+ Aluno</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto" id="propinas-table"></div>
+    </div>
+
+    <div id="financeiro" class="section hidden mt-8 rounded-3xl bg-white p-6 ring-1 ring-slate-200/80 shadow-sm">
+      <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Relatório Mensal de Contas</h2>
+          <p class="mt-1 text-sm text-slate-500">Resumo das entradas e saídas do mês.</p>
+        </div>
+        <button class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700" onclick="openModal('add-transacao')">+ Lançamento</button>
+      </div>
+      <div id="fin-list" class="space-y-3"></div>
+    </div>
+
+    <div id="alunos" class="section hidden mt-8 rounded-3xl bg-white p-6 ring-1 ring-slate-200/80 shadow-sm">
+      <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Lista de Alunos</h2>
+          <p class="mt-1 text-sm text-slate-500">Veja o status de pagamento de cada aluno.</p>
+        </div>
+        <button class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700" onclick="openModal('add-aluno')">+ Novo Aluno</button>
+      </div>
+      <div class="overflow-x-auto" id="alunos-table"></div>
+    </div>
+  </div>
+
+  <div class="modal-bg fixed inset-0 hidden items-center justify-center bg-slate-950/60 p-4" id="modal-add-aluno">
+    <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-slate-200">
+      <h3 class="text-xl font-semibold text-slate-900">Adicionar Aluno</h3>
+      <div class="mt-5 space-y-4">
+        <label class="block text-sm font-medium text-slate-600">Nome Completo
+          <input type="text" id="input-nome" placeholder="Ex: António Jamba" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+        </label>
+        <label class="block text-sm font-medium text-slate-600">Número
+          <input type="text" id="input-num" placeholder="Nº do aluno" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+        </label>
+      </div>
+      <div class="mt-6 flex flex-wrap gap-3 justify-end">
+        <button class="rounded-2xl border border-slate-300 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100" onclick="closeModal('add-aluno')">Cancelar</button>
+        <button class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700" onclick="addAluno()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg fixed inset-0 hidden items-center justify-center bg-slate-950/60 p-4" id="modal-add-transacao">
+    <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-slate-200">
+      <h3 class="text-xl font-semibold text-slate-900">Novo Lançamento</h3>
+      <div class="mt-5 space-y-4">
+        <label class="block text-sm font-medium text-slate-600">Data
+          <input type="text" id="t-data" placeholder="Ex: 19/05/2026" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+        </label>
+        <label class="block text-sm font-medium text-slate-600">Tipo
+          <select id="t-tipo" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100">
+            <option value="entrada">Entrada (Propina recebida)</option>
+            <option value="saida">Saída (Despesa)</option>
+          </select>
+        </label>
+        <label class="block text-sm font-medium text-slate-600">Valor (Kz)
+          <input type="text" id="t-valor" placeholder="Ex: 3000" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+        </label>
+        <label class="block text-sm font-medium text-slate-600">Descrição
+          <input type="text" id="t-desc" placeholder="Ex: Propina de António Jamba" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+        </label>
+      </div>
+      <div class="mt-6 flex flex-wrap gap-3 justify-end">
+        <button class="rounded-2xl border border-slate-300 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100" onclick="closeModal('add-transacao')">Cancelar</button>
+        <button class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700" onclick="addTransacao()">Registar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const MESES = ['SET','OUT','NOV','DEZ','JAN','FEV','MAR','ABR','MAI','JUN','JUL'];
+    const VALOR_PROPINA = 3000;
+
+    let alunos = [
+      'António Jamba','António V. Monguende','António Pemba','Alfredo D. Soque',
+      'Adelina Sossanje','Afonso Sapalo Francisco','Ana Malanga','Angelina Kuivala Prata',
+      'Baptista Singuengue','Belmo Cardoso Chivala','Carlinho César Kandjimbi',
+      'Catarina Mahulo','Cecília Fortuna','Domingos Fernando Seabra','Divua Diogo Eugénio',
+      'Esperança Moises','Eulalia Cambundo','Emiliana Gomes Fuxi','Feliciana António Kifuba',
+      'Fernando Katimba','Fernanda Raimundo João'
+    ];
+
+    let pagamentos = {};
+    alunos.forEach(a => {
+      pagamentos[a] = {};
+      MESES.forEach((m, i) => {
+        pagamentos[a][m] = i < 5 ? (Math.random() > 0.25 ? 'P' : '') : (i < 8 ? (Math.random() > 0.5 ? 'P' : '') : '');
+      });
+    });
+
+    let transacoes = [
+      {data:'05/09/2025', tipo:'entrada', valor:3000, desc:'Propina SET - António Jamba'},
+      {data:'07/09/2025', tipo:'entrada', valor:3000, desc:'Propina SET - Alfredo D. Soque'},
+      {data:'10/10/2025', tipo:'saida', valor:5000, desc:'Material escolar'},
+      {data:'15/10/2025', tipo:'entrada', valor:3000, desc:'Propina OUT - Adelina Sossanje'},
+      {data:'20/11/2025', tipo:'saida', valor:2000, desc:'Limpeza sala'},
+      {data:'05/01/2026', tipo:'entrada', valor:3000, desc:'Propina JAN - Ana Malanga'},
+    ];
+
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+      document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('bg-slate-900','text-white'));
+      document.getElementById(id).classList.remove('hidden');
+      document.querySelector(`[data-section="${id}"]`).classList.add('bg-slate-900','text-white');
+      if (id === 'financeiro') renderFinanceiro();
+      if (id === 'alunos') renderAlunos();
+      renderMetrics();
+    }
+
+    function renderMetrics() {
+      let total = alunos.length * MESES.length;
+      let pagos = 0;
+      alunos.forEach(a => MESES.forEach(m => { if (pagamentos[a][m] === 'P') pagos++; }));
+      let pct = Math.round(pagos / total * 100);
+      let emDivida = alunos.filter(a => MESES.some(m => pagamentos[a][m] !== 'P')).length;
+      let entradas = transacoes.filter(t => t.tipo === 'entrada').reduce((s, t) => s + Number(t.valor), 0);
+      let saidas = transacoes.filter(t => t.tipo === 'saida').reduce((s, t) => s + Number(t.valor), 0);
+      let saldo = entradas - saidas;
+      document.getElementById('metric-alunos').textContent = alunos.length;
+      document.getElementById('metric-pagas').textContent = `${pct}% (${pagos} / ${total})`;
+      document.getElementById('metric-divida').textContent = `${emDivida} alunos`;
+      const saldoEl = document.getElementById('metric-saldo');
+      saldoEl.textContent = `${saldo.toLocaleString()} Kz`;
+      saldoEl.className = `mt-3 text-3xl font-semibold ${saldo >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+    }
+
+    function renderPropinas() {
+      const mesF = document.getElementById('filter-mes').value;
+      const cols = mesF ? [mesF] : MESES;
+      let html = `<table class="min-w-full divide-y divide-slate-200 text-sm"><thead class="bg-slate-50"><tr><th class="whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-600">Nome</th>`;
+      cols.forEach(m => html += `<th class="whitespace-nowrap px-4 py-3 text-center font-semibold text-slate-600">${m}</th>`);
+      html += `<th class="whitespace-nowrap px-4 py-3 text-center font-semibold text-slate-600">Situação</th></tr></thead><tbody class="divide-y divide-slate-200">`;
+      alunos.forEach(a => {
+        let pagos = cols.filter(m => pagamentos[a][m] === 'P').length;
+        let pct2 = Math.round(pagos / cols.length * 100);
+        let badgeColor = pct2 === 100 ? 'bg-emerald-100 text-emerald-700' : pct2 >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700';
+        html += `<tr class="hover:bg-slate-50"><td class="whitespace-nowrap px-4 py-3 text-slate-900">${a}</td>`;
+        cols.forEach(m => {
+          let status = pagamentos[a][m] === 'P' ? '✓' : '✗';
+          let markClass = pagamentos[a][m] === 'P'
+            ? 'inline-flex h-8 w-8 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700'
+            : 'inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-2xl bg-rose-100 text-rose-700';
+          html += `<td class="whitespace-nowrap px-4 py-3 text-center"><span class="${markClass}" ${pagamentos[a][m] !== 'P' ? `onclick="togglePag('${a}','${m}', this)" title="Clique para registar pagamento"` : ''}>${status}</span></td>`;
+        });
+        html += `<td class="whitespace-nowrap px-4 py-3 text-center"><span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeColor}">${pct2}%</span></td></tr>`;
+      });
+      html += `</tbody></table>`;
+      document.getElementById('propinas-table').innerHTML = html;
+    }
+
+    function togglePag(aluno, mes, el) {
+      pagamentos[aluno][mes] = 'P';
+      el.className = 'inline-flex h-8 w-8 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700';
+      el.textContent = '✓';
+      el.removeAttribute('onclick');
+      el.style.cursor = 'default';
+      transacoes.push({data: new Date().toLocaleDateString('pt-AO'), tipo:'entrada', valor:VALOR_PROPINA, desc:`Propina ${mes} - ${aluno}`});
+      renderMetrics();
+    }
+
+    function renderFinanceiro() {
+      let entradas = 0, saidas = 0;
+      let html = '';
+      transacoes.slice().reverse().forEach(t => {
+        let v = Number(t.valor);
+        if (t.tipo === 'entrada') entradas += v; else saidas += v;
+        html += `<div class="rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm"><div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p class="font-semibold text-slate-900">${t.desc}</p><p class="text-sm text-slate-500">${t.data}</p></div><div class="text-sm font-semibold ${t.tipo === 'entrada' ? 'text-emerald-600' : 'text-rose-600'}">${t.tipo === 'entrada' ? '+' : '-'}${v.toLocaleString()} Kz</div></div></div>`;
+      });
+      let saldo = entradas - saidas;
+      html += `<div class="mt-4 rounded-3xl bg-slate-950 px-5 py-4 text-sm text-slate-100 shadow-sm"><div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><span>Entradas: <strong class="text-emerald-400">+${entradas.toLocaleString()} Kz</strong> · Saídas: <strong class="text-rose-400">-${saidas.toLocaleString()} Kz</strong></span><span class="font-semibold ${saldo >= 0 ? 'text-emerald-300' : 'text-rose-300'}">Saldo: ${saldo.toLocaleString()} Kz</span></div></div>`;
+      document.getElementById('fin-list').innerHTML = html;
+    }
+
+    function renderAlunos() {
+      let html = `<table class="min-w-full divide-y divide-slate-200 text-sm"><thead class="bg-slate-50"><tr><th class="whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-600">Nº</th><th class="whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-600">Nome Completo</th><th class="whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-600">Propinas em dia</th><th class="whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-600">Em falta</th></tr></thead><tbody class="divide-y divide-slate-200">`;
+      alunos.forEach((a, i) => {
+        let pagos = MESES.filter(m => pagamentos[a][m] === 'P').length;
+        let falta = MESES.length - pagos;
+        html += `<tr class="hover:bg-slate-50"><td class="whitespace-nowrap px-4 py-3 text-slate-500">${i+1}</td><td class="whitespace-nowrap px-4 py-3 text-slate-900">${a}</td><td class="whitespace-nowrap px-4 py-3"><span class="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">${pagos} meses</span></td><td class="whitespace-nowrap px-4 py-3">${falta > 0 ? `<span class="inline-flex rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">${falta} meses</span>` : '<span class="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Nenhuma</span>'}</td></tr>`;
+      });
+      html += `</tbody></table>`;
+      document.getElementById('alunos-table').innerHTML = html;
+    }
+
+    function openModal(id) { document.getElementById('modal-'+id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById('modal-'+id).classList.add('hidden'); }
+
+    function addAluno() {
+      let nome = document.getElementById('input-nome').value.trim();
+      if (!nome) return;
+      alunos.push(nome);
+      pagamentos[nome] = {};
+      MESES.forEach(m => pagamentos[nome][m] = '');
+      closeModal('add-aluno');
+      document.getElementById('input-nome').value = '';
+      document.getElementById('input-num').value = '';
+      renderPropinas();
+      renderMetrics();
+      renderAlunos();
+    }
+
+    function addTransacao() {
+      let data = document.getElementById('t-data').value;
+      let tipo = document.getElementById('t-tipo').value;
+      let valor = document.getElementById('t-valor').value;
+      let desc = document.getElementById('t-desc').value.trim();
+      if (!valor || !desc) return;
+      transacoes.push({data, tipo, valor: Number(valor), desc});
+      closeModal('add-transacao');
+      ['t-data','t-valor','t-desc'].forEach(id => document.getElementById(id).value = '');
+      renderFinanceiro();
+      renderMetrics();
+    }
+
+    const selMes = document.getElementById('filter-mes');
+    MESES.forEach(m => {
+      let o = document.createElement('option');
+      o.value = m;
+      o.textContent = m;
+      selMes.appendChild(o);
+    });
+
+    renderMetrics();
+    renderPropinas();
+  </script>
+</body>
+</html>
